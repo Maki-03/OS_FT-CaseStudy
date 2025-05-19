@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Page Replacement Algorithms</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    input, button {
+      padding: 8px;
+      font-size: 16px;
+      margin: 5px;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 10px;
+      white-space: pre-wrap;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #999;
+      padding: 5px;
+      text-align: center;
+    }
+    th {
+      background-color: #eee;
+    }
+    #warning {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Page Replacement Algorithms: FIFO, LRU, OPT</h1>
+  
+  <label for="frames">Number of Page Frames (max 9):</label>
+  <input type="number" id="frames" min="1" max="9" value="3">
+  <button onclick="simulate()">Run Simulation</button>
+  <div id="warning"></div>
+
+  <h3>Random Page Reference String:</h3>
+  <pre id="referenceString"></pre>
+
+  <h3>Results:</h3>
+  <div id="results"></div>
+
+  <script>
+    function generateReferenceString(length = 20) {
+      const refs = [];
+      for (let i = 0; i < length; i++) {
+        refs.push(Math.floor(Math.random() * 10));
+      }
+      return refs;
+    }
+
+    function fifo(pages, frames) {
+      const memory = [];
+      let faults = 0;
+      const steps = [];
+
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        let fault = false;
+
+        if (!memory.includes(page)) {
+          faults++;
+          fault = true;
+          if (memory.length >= frames) {
+            memory.shift();
+          }
+          memory.push(page);
+        }
+
+        steps.push({
+          step: i + 1,
+          page: page,
+          memory: [...memory],
+          fault: fault
+        });
+      }
+
+      return { faults, steps };
+    }
+
+    function lru(pages, frames) {
+      const memory = [];
+      let faults = 0;
+      const steps = [];
+
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        let fault = false;
+
+        if (!memory.includes(page)) {
+          faults++;
+          fault = true;
+          if (memory.length >= frames) {
+            memory.shift();
+          }
+        } else {
+          memory.splice(memory.indexOf(page), 1);
+        }
+
+        memory.push(page);
+
+        steps.push({
+          step: i + 1,
+          page: page,
+          memory: [...memory],
+          fault: fault
+        });
+      }
+
+      return { faults, steps };
+    }
+
+    function optimal(pages, frames) {
+      const memory = [];
+      let faults = 0;
+      const steps = [];
+
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        let fault = false;
+
+        if (!memory.includes(page)) {
+          faults++;
+          fault = true;
+          if (memory.length >= frames) {
+            let farthestIndex = -1;
+            let indexToReplace = 0;
+            for (let j = 0; j < memory.length; j++) {
+              let nextUse = pages.slice(i + 1).indexOf(memory[j]);
+              if (nextUse === -1) {
+                indexToReplace = j;
+                break;
+              } else if (nextUse > farthestIndex) {
+                farthestIndex = nextUse;
+                indexToReplace = j;
+              }
+            }
+            memory.splice(indexToReplace, 1);
+          }
+          memory.push(page);
+        }
+
+        steps.push({
+          step: i + 1,
+          page: page,
+          memory: [...memory],
+          fault: fault
+        });
+      }
+
+      return { faults, steps };
+    }
+
+    function createTable(title, data) {
+      let html = `<h4>${title} (Page Faults: ${data.faults})</h4>`;
+      html += `<table>
+        <tr><th>Step</th><th>Page</th><th>Frames</th><th>Page Fault</th></tr>`;
+
+      for (const step of data.steps) {
+        html += `<tr>
+          <td>${step.step}</td>
+          <td>${step.page}</td>
+          <td>${step.memory.join(', ')}</td>
+          <td>${step.fault ? "Yes" : "No"}</td>
+        </tr>`;
+      }
+
+      html += "</table>";
+      return html;
+    }
+
+    function simulate() {
+      const frames = parseInt(document.getElementById("frames").value);
+      const warningDiv = document.getElementById("warning");
+      const resultsDiv = document.getElementById("results");
+      const referenceDisplay = document.getElementById("referenceString");
+
+      if (frames > 9) {
+        warningDiv.textContent = "⚠️ The number of page frames cannot exceed 9!";
+        referenceDisplay.textContent = "";
+        resultsDiv.innerHTML = "";
+        return;
+      }
+
+      warningDiv.textContent = ""; // clear warning
+
+      const reference = generateReferenceString();
+      referenceDisplay.textContent = reference.join(" ");
+
+      const fifoData = fifo(reference, frames);
+      const lruData = lru(reference, frames);
+      const optData = optimal(reference, frames);
+
+      const resultHTML = `
+        ${createTable("FIFO", fifoData)}
+        ${createTable("LRU", lruData)}
+        ${createTable("Optimal (OPT)", optData)}
+      `;
+
+      resultsDiv.innerHTML = resultHTML;
+    }
+  </script>
+</body>
+</html>
