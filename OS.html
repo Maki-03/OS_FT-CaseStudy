@@ -19,9 +19,8 @@
       white-space: pre-wrap;
     }
     table {
-      width: 100%;
       border-collapse: collapse;
-      margin-bottom: 20px;
+      width: 100%;
     }
     th, td {
       border: 1px solid #999;
@@ -35,6 +34,20 @@
       color: red;
       font-weight: bold;
       margin-top: 10px;
+    }
+    .table-container {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: space-around;
+    }
+    .table-block {
+      min-width: 300px;
+      flex: 1;
+    }
+    .table-block h4 {
+      text-align: center;
+      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -164,7 +177,7 @@
     }
 
     function createTable(title, data) {
-      let html = `<h4>${title} (Page Faults: ${data.faults})</h4>`;
+      let html = `<div class="table-block"><h4>${title} (Page Faults: ${data.faults})</h4>`;
       html += `<table>
         <tr><th>Step</th><th>Page</th><th>Frames</th><th>Page Fault</th></tr>`;
 
@@ -177,7 +190,7 @@
         </tr>`;
       }
 
-      html += "</table>";
+      html += `</table></div>`;
       return html;
     }
 
@@ -204,9 +217,11 @@
       const optData = optimal(reference, frames);
 
       const resultHTML = `
-        ${createTable("FIFO", fifoData)}
-        ${createTable("LRU", lruData)}
-        ${createTable("Optimal (OPT)", optData)}
+        <div class="table-container">
+          ${createTable("FIFO", fifoData)}
+          ${createTable("LRU", lruData)}
+          ${createTable("Optimal (OPT)", optData)}
+        </div>
       `;
 
       resultsDiv.innerHTML = resultHTML;
